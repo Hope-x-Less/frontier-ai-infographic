@@ -1,0 +1,1878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Architecture & Evolution of Frontier AI Models</title>
+  <meta name="description" content="An interactive infographic exploring the architecture, evolution, and benchmarks of frontier AI models including GPT-4o, Claude 3.5 Sonnet, Gemini 1.5 Pro, and Llama 3." />
+  <style>
+    /* ─── Reset & Base ──────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-deep:       #0B0F19;
+      --bg-panel:      #111827;
+      --bg-card:       #141B2D;
+      --bg-card-hover: #1A2340;
+      --border:        #1E2D45;
+      --border-bright: #2A3F5F;
+      --slate:         #94A3B8;
+      --slate-dim:     #4B5A72;
+      --white:         #E2E8F0;
+      --blue:          #00D2FF;
+      --blue-dim:      rgba(0, 210, 255, 0.15);
+      --blue-glow:     0 0 18px rgba(0,210,255,0.55);
+      --purple:        #9D4EDD;
+      --purple-dim:    rgba(157, 78, 221, 0.15);
+      --purple-glow:   0 0 18px rgba(157,78,221,0.55);
+      --green:         #10F08C;
+      --green-dim:     rgba(16, 240, 140, 0.12);
+      --orange:        #FF8C42;
+      --red:           #FF4D6D;
+      --font:          'Segoe UI', system-ui, -apple-system, sans-serif;
+      --mono:          'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+      --radius:        12px;
+      --radius-sm:     8px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg-deep);
+      color: var(--slate);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ─── Scrollbar ─────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-deep); }
+    ::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--blue); }
+
+    /* ─── Animated Grid Background ──────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,210,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,210,255,0.03) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── Header ────────────────────────────────────────────────── */
+    header {
+      position: relative;
+      z-index: 10;
+      padding: 40px 48px 32px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(0,210,255,0.04) 0%, transparent 100%);
+    }
+
+    .header-inner {
+      max-width: 1600px;
+      margin: 0 auto;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--blue-dim);
+      border: 1px solid rgba(0,210,255,0.3);
+      border-radius: 40px;
+      padding: 4px 14px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--blue);
+      margin-bottom: 16px;
+    }
+
+    .header-badge .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--blue);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.7); }
+    }
+
+    h1 {
+      font-size: clamp(22px, 3vw, 36px);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--white);
+      margin-bottom: 10px;
+    }
+
+    h1 span.accent { color: var(--blue); }
+    h1 span.accent2 { color: var(--purple); }
+
+    .hero-subtitle {
+      font-size: 14px;
+      color: var(--slate-dim);
+      max-width: 540px;
+      line-height: 1.65;
+    }
+
+    .header-stats {
+      display: flex;
+      gap: 28px;
+      flex-wrap: wrap;
+    }
+
+    .stat-chip {
+      text-align: center;
+    }
+
+    .stat-chip .val {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--white);
+      display: block;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stat-chip .lbl {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--slate-dim);
+      margin-top: 2px;
+    }
+
+    .stat-chip .val.blue { color: var(--blue); }
+    .stat-chip .val.purple { color: var(--purple); }
+    .stat-chip .val.green { color: var(--green); }
+
+    /* ─── Main Layout ───────────────────────────────────────────── */
+    .main-layout {
+      position: relative;
+      z-index: 10;
+      max-width: 1600px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 0;
+      min-height: calc(100vh - 180px);
+    }
+
+    /* ─── Left Pane ─────────────────────────────────────────────── */
+    .left-pane {
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 32px 24px;
+      max-height: calc(100vh - 180px);
+      position: sticky;
+      top: 0;
+    }
+
+    .pane-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--slate-dim);
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pane-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ─── Model Family Groups ───────────────────────────────────── */
+    .family-group {
+      margin-bottom: 32px;
+    }
+
+    .family-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      padding: 0 4px;
+    }
+
+    .family-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .family-name {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .family-line {
+      flex: 1;
+      height: 1px;
+      opacity: 0.3;
+    }
+
+    /* ─── Model Node Cards ──────────────────────────────────────── */
+    .model-node {
+      position: relative;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
+
+    .model-node::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      border-radius: 3px 0 0 3px;
+      background: var(--accent, var(--blue));
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .model-node:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border-bright);
+      transform: translateX(4px);
+    }
+
+    .model-node:hover::before { opacity: 0.7; }
+
+    .model-node.active {
+      background: var(--bg-card-hover);
+      border-color: var(--accent, var(--blue));
+      box-shadow: 0 0 0 1px var(--accent, var(--blue)), var(--glow, var(--blue-glow));
+      transform: translateX(6px);
+    }
+
+    .model-node.active::before { opacity: 1; }
+
+    .node-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .node-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: -0.01em;
+    }
+
+    .node-date {
+      font-size: 10px;
+      font-family: var(--mono);
+      color: var(--slate-dim);
+      padding: 3px 8px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
+    .node-tagline {
+      font-size: 12px;
+      color: var(--slate-dim);
+      line-height: 1.5;
+      margin-bottom: 10px;
+    }
+
+    .node-chips {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .chip-blue  { background: var(--blue-dim);   color: var(--blue);   border: 1px solid rgba(0,210,255,0.2); }
+    .chip-purple{ background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(157,78,221,0.2); }
+    .chip-green { background: var(--green-dim);  color: var(--green);  border: 1px solid rgba(16,240,140,0.2); }
+    .chip-orange{ background: rgba(255,140,66,0.12); color: var(--orange); border: 1px solid rgba(255,140,66,0.2); }
+    .chip-red   { background: rgba(255,77,109,0.12); color: var(--red);    border: 1px solid rgba(255,77,109,0.2); }
+
+    .node-mini-bar {
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mini-bar-label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--slate-dim);
+      width: 38px;
+      flex-shrink: 0;
+    }
+
+    .mini-bar-track {
+      flex: 1;
+      height: 4px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .mini-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 0;
+    }
+
+    .mini-bar-val {
+      font-size: 9px;
+      font-family: var(--mono);
+      color: var(--slate);
+      width: 34px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    /* ─── Right Pane ────────────────────────────────────────────── */
+    .right-pane {
+      padding: 32px 36px;
+      overflow-y: auto;
+      max-height: calc(100vh - 180px);
+      position: sticky;
+      top: 0;
+    }
+
+    /* ─── Placeholder State ─────────────────────────────────────── */
+    .placeholder-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 400px;
+      gap: 20px;
+      text-align: center;
+      transition: opacity 0.4s ease;
+    }
+
+    .placeholder-state svg {
+      opacity: 0.15;
+    }
+
+    .placeholder-state h3 {
+      font-size: 18px;
+      color: var(--slate-dim);
+      font-weight: 600;
+    }
+
+    .placeholder-state p {
+      font-size: 13px;
+      color: var(--slate-dim);
+      opacity: 0.6;
+      max-width: 280px;
+      line-height: 1.6;
+    }
+
+    /* ─── Detail Panel ──────────────────────────────────────────── */
+    .detail-panel {
+      display: none;
+      animation: fadeSlideIn 0.4s ease forwards;
+    }
+
+    .detail-panel.visible { display: block; }
+
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .detail-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 18px;
+      margin-bottom: 28px;
+    }
+
+    .detail-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .detail-title-block h2 {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--white);
+      letter-spacing: -0.02em;
+      margin-bottom: 4px;
+    }
+
+    .detail-title-block .subtitle {
+      font-size: 13px;
+      color: var(--slate-dim);
+      line-height: 1.5;
+    }
+
+    .detail-chips {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    /* ─── Section Labels ────────────────────────────────────────── */
+    .section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--slate-dim);
+      margin-bottom: 14px;
+      margin-top: 28px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-label::before {
+      content: '';
+      width: 14px;
+      height: 2px;
+      border-radius: 2px;
+      background: var(--accent, var(--blue));
+    }
+
+    /* ─── Benchmark Bars ────────────────────────────────────────── */
+    .benchmark-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .bench-row {
+      display: grid;
+      grid-template-columns: 140px 1fr 56px;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .bench-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--slate);
+    }
+
+    .bench-name span {
+      display: block;
+      font-size: 10px;
+      font-weight: 400;
+      color: var(--slate-dim);
+      margin-top: 1px;
+    }
+
+    .bench-track {
+      height: 10px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .bench-fill {
+      height: 100%;
+      border-radius: 6px;
+      width: 0;
+      transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    .bench-fill::after {
+      content: '';
+      position: absolute;
+      right: 0; top: 0; bottom: 0;
+      width: 4px;
+      background: rgba(255,255,255,0.4);
+      border-radius: 2px;
+    }
+
+    .bench-score {
+      font-size: 13px;
+      font-family: var(--mono);
+      font-weight: 700;
+      text-align: right;
+      color: var(--white);
+    }
+
+    /* ─── Architecture Grid ─────────────────────────────────────── */
+    .arch-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .arch-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      transition: all 0.3s ease;
+    }
+
+    .arch-card:hover {
+      background: rgba(255,255,255,0.05);
+      border-color: var(--border-bright);
+    }
+
+    .arch-card-icon {
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+
+    .arch-card-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--slate-dim);
+      margin-bottom: 4px;
+    }
+
+    .arch-card-value {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--white);
+      font-family: var(--mono);
+    }
+
+    .arch-card-sub {
+      font-size: 11px;
+      color: var(--slate-dim);
+      margin-top: 3px;
+    }
+
+    /* ─── Capability Radar (SVG) ────────────────────────────────── */
+    .radar-container {
+      display: flex;
+      justify-content: center;
+      margin: 8px 0;
+    }
+
+    /* ─── Strength Pillars ──────────────────────────────────────── */
+    .strengths-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .strength-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.02);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--slate);
+      line-height: 1.5;
+      transition: all 0.3s ease;
+    }
+
+    .strength-item:hover {
+      background: rgba(255,255,255,0.04);
+      border-color: var(--border-bright);
+      color: var(--white);
+    }
+
+    .strength-item .sicon {
+      margin-top: 1px;
+      flex-shrink: 0;
+      font-size: 14px;
+    }
+
+    /* ─── RL Loop Diagram ───────────────────────────────────────── */
+    .rl-diagram {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+
+    .rl-step {
+      padding: 14px 10px;
+      text-align: center;
+      position: relative;
+      border-right: 1px solid var(--border);
+      transition: background 0.3s ease;
+    }
+
+    .rl-step:last-child { border-right: none; }
+
+    .rl-step:hover { background: rgba(255,255,255,0.04); }
+
+    .rl-step .rl-icon { font-size: 20px; margin-bottom: 6px; }
+    .rl-step .rl-name {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--slate);
+      margin-bottom: 4px;
+    }
+    .rl-step .rl-desc {
+      font-size: 9px;
+      color: var(--slate-dim);
+      line-height: 1.5;
+    }
+
+    .rl-arrow {
+      position: absolute;
+      right: -10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 12px;
+      color: var(--accent, var(--blue));
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    /* ─── Modality Flags ────────────────────────────────────────── */
+    .modality-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .modality-flag {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.02);
+      transition: all 0.3s ease;
+    }
+
+    .modality-flag.active {
+      border-color: var(--accent, var(--blue));
+      background: rgba(0,210,255,0.06);
+      color: var(--white);
+    }
+
+    .modality-flag.inactive {
+      opacity: 0.35;
+      color: var(--slate-dim);
+    }
+
+    .mflag-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent, var(--blue));
+    }
+
+    .modality-flag.inactive .mflag-dot {
+      background: var(--slate-dim);
+    }
+
+    /* ─── Overview Paragraph ────────────────────────────────────── */
+    .overview-text {
+      font-size: 13.5px;
+      line-height: 1.75;
+      color: var(--slate);
+      background: rgba(255,255,255,0.02);
+      border-left: 3px solid var(--accent, var(--blue));
+      padding: 14px 16px;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    }
+
+    /* ─── Key Numbers Row ───────────────────────────────────────── */
+    .key-numbers {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .knum {
+      background: rgba(255,255,255,0.025);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .knum:hover {
+      border-color: var(--border-bright);
+      background: rgba(255,255,255,0.045);
+    }
+
+    .knum-val {
+      font-size: 20px;
+      font-weight: 800;
+      font-family: var(--mono);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .knum-lbl {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--slate-dim);
+    }
+
+    /* ─── Family color themes ───────────────────────────────────── */
+    .theme-openai   { --accent: #00D2FF; --glow: var(--blue-glow); }
+    .theme-anthropic{ --accent: #FF8C42; --glow: 0 0 18px rgba(255,140,66,0.55); }
+    .theme-google   { --accent: #9D4EDD; --glow: var(--purple-glow); }
+    .theme-meta     { --accent: #10F08C; --glow: 0 0 18px rgba(16,240,140,0.55); }
+
+    .model-node.theme-openai    { --accent: #00D2FF; }
+    .model-node.theme-anthropic { --accent: #FF8C42; }
+    .model-node.theme-google    { --accent: #9D4EDD; }
+    .model-node.theme-meta      { --accent: #10F08C; }
+
+    /* ─── Footer ────────────────────────────────────────────────── */
+    footer {
+      position: relative;
+      z-index: 10;
+      border-top: 1px solid var(--border);
+      padding: 20px 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .footer-left {
+      font-size: 12px;
+      color: var(--slate-dim);
+    }
+
+    .footer-left strong { color: var(--slate); }
+
+    .footer-links {
+      display: flex;
+      gap: 20px;
+    }
+
+    .footer-links span {
+      font-size: 11px;
+      color: var(--slate-dim);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    /* ─── Selection cursor glint ────────────────────────────────── */
+    @keyframes glint {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
+    }
+
+    .glint { animation: glint 3s ease-in-out infinite; }
+
+    /* ─── Tick marks on radar SVG ───────────────────────────────── */
+    .radar-label { font-size: 9px; fill: var(--slate-dim); }
+
+    /* ─── Responsive fallback ───────────────────────────────────── */
+    @media (max-width: 960px) {
+      .main-layout {
+        grid-template-columns: 1fr;
+      }
+      .left-pane, .right-pane {
+        max-height: none;
+        position: static;
+      }
+      header { padding: 24px 20px 20px; }
+      .header-inner { flex-direction: column; align-items: flex-start; }
+      footer { padding: 16px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!--  HEADER                                                        -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<header>
+  <div class="header-inner">
+    <div>
+      <div class="header-badge">
+        <span class="dot"></span>
+        Live Intelligence Dashboard
+      </div>
+      <h1>The <span class="accent">Architecture</span> &amp; <span class="accent2">Evolution</span><br>of Frontier AI Models</h1>
+      <p class="hero-subtitle">
+        A deep-dive interactive atlas mapping the landmark foundation models shaping artificial general intelligence —
+        benchmarks, architectures, capabilities, and training paradigms visualized.
+      </p>
+    </div>
+    <div class="header-stats">
+      <div class="stat-chip">
+        <span class="val blue" id="counter-models">0</span>
+        <span class="lbl">Frontier Models</span>
+      </div>
+      <div class="stat-chip">
+        <span class="val purple" id="counter-params">—</span>
+        <span class="lbl">Peak Params</span>
+      </div>
+      <div class="stat-chip">
+        <span class="val green" id="counter-ctx">—</span>
+        <span class="lbl">Max Context</span>
+      </div>
+      <div class="stat-chip">
+        <span class="val" style="color:var(--orange)">4</span>
+        <span class="lbl">Organizations</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!--  MAIN LAYOUT                                                   -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="main-layout">
+
+  <!-- ─── LEFT PANE ─────────────────────────────────────────── -->
+  <aside class="left-pane" id="left-pane">
+    <div class="pane-label">Model Families</div>
+
+    <!-- OpenAI Family -->
+    <div class="family-group">
+      <div class="family-header">
+        <span class="family-dot" style="background:#00D2FF; box-shadow: 0 0 8px #00D2FF;"></span>
+        <span class="family-name" style="color:#00D2FF;">OpenAI</span>
+        <span class="family-line" style="background: linear-gradient(90deg, #00D2FF, transparent);"></span>
+      </div>
+
+      <div class="model-node theme-openai" id="node-gpt4o" onclick="selectModel('gpt4o', this)" tabindex="0" role="button" aria-label="Select GPT-4o model">
+        <div class="node-top">
+          <span class="node-name">GPT-4o</span>
+          <span class="node-date">May 2024</span>
+        </div>
+        <div class="node-tagline">Omni-modal flagship — text, vision, audio in one unified model architecture.</div>
+        <div class="node-chips">
+          <span class="chip chip-blue">Multimodal</span>
+          <span class="chip chip-purple">RLHF + RLAIF</span>
+          <span class="chip chip-green">128K ctx</span>
+        </div>
+        <div class="node-mini-bar">
+          <span class="mini-bar-label">MMLU</span>
+          <div class="mini-bar-track"><div class="mini-bar-fill" style="background: linear-gradient(90deg, #00D2FF, #00A8CC);" data-target="88.7"></div></div>
+          <span class="mini-bar-val">88.7%</span>
+        </div>
+      </div>
+
+      <div class="model-node theme-openai" id="node-o3" onclick="selectModel('o3', this)" tabindex="0" role="button" aria-label="Select o3 model">
+        <div class="node-top">
+          <span class="node-name">o3 (reasoning)</span>
+          <span class="node-date">Dec 2024</span>
+        </div>
+        <div class="node-tagline">Chain-of-thought reasoning model with extended thinking time &amp; agentic problem solving.</div>
+        <div class="node-chips">
+          <span class="chip chip-blue">Reasoning</span>
+          <span class="chip chip-purple">Process Reward</span>
+          <span class="chip chip-orange">200K ctx</span>
+        </div>
+        <div class="node-mini-bar">
+          <span class="mini-bar-label">MMLU</span>
+          <div class="mini-bar-track"><div class="mini-bar-fill" style="background: linear-gradient(90deg, #00D2FF, #00A8CC);" data-target="91.2"></div></div>
+          <span class="mini-bar-val">91.2%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Anthropic Family -->
+    <div class="family-group">
+      <div class="family-header">
+        <span class="family-dot" style="background:#FF8C42; box-shadow: 0 0 8px #FF8C42;"></span>
+        <span class="family-name" style="color:#FF8C42;">Anthropic</span>
+        <span class="family-line" style="background: linear-gradient(90deg, #FF8C42, transparent);"></span>
+      </div>
+
+      <div class="model-node theme-anthropic" id="node-claude35" onclick="selectModel('claude35', this)" tabindex="0" role="button" aria-label="Select Claude 3.5 Sonnet model">
+        <div class="node-top">
+          <span class="node-name">Claude 3.5 Sonnet</span>
+          <span class="node-date">Jun 2024</span>
+        </div>
+        <div class="node-tagline">Constitutional AI + RLHF powerhouse. Best-in-class code generation and agentic tasks.</div>
+        <div class="node-chips">
+          <span class="chip chip-orange">CAI Safety</span>
+          <span class="chip chip-blue">Coding</span>
+          <span class="chip chip-green">200K ctx</span>
+        </div>
+        <div class="node-mini-bar">
+          <span class="mini-bar-label">MMLU</span>
+          <div class="mini-bar-track"><div class="mini-bar-fill" style="background: linear-gradient(90deg, #FF8C42, #E06A20);" data-target="88.3"></div></div>
+          <span class="mini-bar-val">88.3%</span>
+        </div>
+      </div>
+
+      <div class="model-node theme-anthropic" id="node-claude3" onclick="selectModel('claude3', this)" tabindex="0" role="button" aria-label="Select Claude 3 Opus model">
+        <div class="node-top">
+          <span class="node-name">Claude 3 Opus</span>
+          <span class="node-date">Mar 2024</span>
+        </div>
+        <div class="node-tagline">Maximum intelligence flagship from Anthropic with deep reasoning depth and context faithfulness.</div>
+        <div class="node-chips">
+          <span class="chip chip-orange">CAI</span>
+          <span class="chip chip-purple">Vision</span>
+          <span class="chip chip-green">200K ctx</span>
+        </div>
+        <div class="node-mini-bar">
+          <span class="mini-bar-label">MMLU</span>
+          <div class="mini-bar-track"><div class="mini-bar-fill" style="background: linear-gradient(90deg, #FF8C42, #E06A20);" data-target="86.8"></div></div>
+          <span class="mini-bar-val">86.8%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Google DeepMind Family -->
+    <div class="family-group">
+      <div class="family-header">
+        <span class="family-dot" style="background:#9D4EDD; box-shadow: 0 0 8px #9D4EDD;"></span>
+        <span class="family-name" style="color:#9D4EDD;">Google DeepMind</span>
+        <span class="family-line" style="background: linear-gradient(90deg, #9D4EDD, transparent);"></span>
+      </div>
+
+      <div class="model-node theme-google" id="node-gemini15pro" onclick="selectModel('gemini15pro', this)" tabindex="0" role="button" aria-label="Select Gemini 1.5 Pro model">
+        <div class="node-top">
+          <span class="node-name">Gemini 1.5 Pro</span>
+          <span class="node-date">Feb 2024</span>
+        </div>
+        <div class="node-tagline">Mixture-of-Experts architecture enabling breakthrough 1M-token long context reasoning.</div>
+        <div class="node-chips">
+          <span class="chip chip-purple">MoE Arch</span>
+          <span class="chip chip-blue">1M ctx</span>
+          <span class="chip chip-green">Multimodal</span>
+        </div>
+        <div class="node-mini-bar">
+          <span class="mini-bar-label">MMLU</span>
+          <div class="mini-bar-track"><div class="mini-bar-fill" style="background: linear-gradient(90deg, #9D4EDD, #7A30B8);" data-target="85.9"></div></div>
+          <span class="mini-bar-val">85.9%</span>
+        </div>
+      </div>
+
+      <div class="model-node theme-google" id="node-gemini20" onclick="selectModel('gemini20', this)" tabindex="0" role="button" aria-label="Select Gemini 2.0 Flash model">
+        <div class="node-top">
+          <span class="node-name">Gemini 2.0 Flash</span>
+          <span class="node-date">Jan 2025</span>
+        </div>
+        <div class="node-tagline">High-speed production model with real-time voice, video streaming and native tool use.</div>
+        <div class="node-chips">
+          <span class="chip chip-purple">Native Tools</span>
+          <span class="chip chip-blue">1M ctx</span>
+          <span class="chip chip-orange">Streaming</span>
+        </div>
+        <div class="node-mini-bar">
+          <span class="mini-bar-label">MMLU</span>
+          <div class="mini-bar-track"><div class="mini-bar-fill" style="background: linear-gradient(90deg, #9D4EDD, #7A30B8);" data-target="87.0"></div></div>
+          <span class="mini-bar-val">87.0%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Meta Family -->
+    <div class="family-group">
+      <div class="family-header">
+        <span class="family-dot" style="background:#10F08C; box-shadow: 0 0 8px #10F08C;"></span>
+        <span class="family-name" style="color:#10F08C;">Meta AI</span>
+        <span class="family-line" style="background: linear-gradient(90deg, #10F08C, transparent);"></span>
+      </div>
+
+      <div class="model-node theme-meta" id="node-llama3" onclick="selectModel('llama3', this)" tabindex="0" role="button" aria-label="Select Llama 3.1 405B model">
+        <div class="node-top">
+          <span class="node-name">Llama 3.1 405B</span>
+          <span class="node-date">Jul 2024</span>
+        </div>
+        <div class="node-tagline">Open-weight frontier model at 405B parameters. Near-GPT-4 performance, fully open.</div>
+        <div class="node-chips">
+          <span class="chip chip-green">Open Weight</span>
+          <span class="chip chip-blue">128K ctx</span>
+          <span class="chip chip-orange">405B params</span>
+        </div>
+        <div class="node-mini-bar">
+          <span class="mini-bar-label">MMLU</span>
+          <div class="mini-bar-track"><div class="mini-bar-fill" style="background: linear-gradient(90deg, #10F08C, #00C070);" data-target="87.3"></div></div>
+          <span class="mini-bar-val">87.3%</span>
+        </div>
+      </div>
+
+      <div class="model-node theme-meta" id="node-llama4" onclick="selectModel('llama4', this)" tabindex="0" role="button" aria-label="Select Llama 4 Scout model">
+        <div class="node-top">
+          <span class="node-name">Llama 4 Scout</span>
+          <span class="node-date">Apr 2025</span>
+        </div>
+        <div class="node-tagline">Mixture-of-Experts multimodal model with native 10M-token context. Most efficient open frontier model.</div>
+        <div class="node-chips">
+          <span class="chip chip-green">MoE · Open</span>
+          <span class="chip chip-blue">10M ctx</span>
+          <span class="chip chip-purple">Multimodal</span>
+        </div>
+        <div class="node-mini-bar">
+          <span class="mini-bar-label">MMLU</span>
+          <div class="mini-bar-track"><div class="mini-bar-fill" style="background: linear-gradient(90deg, #10F08C, #00C070);" data-target="79.2"></div></div>
+          <span class="mini-bar-val">79.2%</span>
+        </div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ─── RIGHT PANE ─────────────────────────────────────────── -->
+  <section class="right-pane" id="right-pane">
+
+    <!-- Placeholder -->
+    <div class="placeholder-state" id="placeholder">
+      <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="40" cy="40" r="38" stroke="#00D2FF" stroke-width="1.5" stroke-dasharray="6 4"/>
+        <circle cx="40" cy="40" r="24" stroke="#9D4EDD" stroke-width="1" stroke-dasharray="4 3"/>
+        <circle cx="40" cy="40" r="8" fill="#00D2FF" opacity="0.4"/>
+        <line x1="40" y1="2" x2="40" y2="20" stroke="#00D2FF" stroke-width="1.5"/>
+        <line x1="40" y1="60" x2="40" y2="78" stroke="#00D2FF" stroke-width="1.5"/>
+        <line x1="2" y1="40" x2="20" y2="40" stroke="#9D4EDD" stroke-width="1.5"/>
+        <line x1="60" y1="40" x2="78" y2="40" stroke="#9D4EDD" stroke-width="1.5"/>
+      </svg>
+      <h3>Select a Model to Explore</h3>
+      <p>Click any model node on the left to load its full architectural breakdown, benchmarks, and capabilities.</p>
+    </div>
+
+    <!-- Detail Panel (hidden until selection) -->
+    <div class="detail-panel" id="detail-panel"></div>
+
+  </section>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!--  FOOTER                                                        -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<footer>
+  <div class="footer-left">
+    <strong>Frontier AI Models — Interactive Atlas</strong> &nbsp;·&nbsp;
+    Data sourced from official technical reports &amp; peer-reviewed benchmarks · 2024–2025
+  </div>
+  <div class="footer-links">
+    <span>🔵 <strong style="color:var(--blue)">8</strong> Models Charted</span>
+    <span>🟣 <strong style="color:var(--purple)">4</strong> Families</span>
+    <span>🟢 <strong style="color:var(--green)">Live</strong> Interactive</span>
+  </div>
+</footer>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!--  DATA & LOGIC                                                  -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<script>
+  /* ──────────────────────────────────────────────────────────────
+     MODEL DATABASE
+  ────────────────────────────────────────────────────────────── */
+  const MODELS = {
+
+    gpt4o: {
+      name: 'GPT-4o',
+      family: 'OpenAI',
+      release: 'May 2024',
+      icon: '⚡',
+      iconBg: 'linear-gradient(135deg, rgba(0,210,255,0.25), rgba(0,120,180,0.15))',
+      iconBorder: '1px solid rgba(0,210,255,0.4)',
+      accent: '#00D2FF',
+      theme: 'theme-openai',
+      tagline: 'Unified Omni-Modal Foundation Model — Text, Vision, Audio, Code',
+      overview: 'GPT-4o ("o" for omni) is OpenAI\'s flagship multimodal model trained end-to-end across text, audio, and vision modalities in a single unified architecture. Unlike its predecessors which stitched separate encoders, GPT-4o processes all modalities through a shared transformer, enabling sub-300ms audio response latency and richer cross-modal reasoning. It achieves human-parity on spoken English and matches GPT-4 Turbo on reasoning tasks at twice the throughput.',
+      params: '~1.8T (MoE est.)',
+      context: '128K tokens',
+      training: 'RLHF + RLAIF + DPO',
+      released: 'May 13, 2024',
+      throughput: '~2× GPT-4T',
+      api: 'Tiered (API + ChatGPT)',
+      benchmarks: [
+        { name: 'MMLU', sub: 'Knowledge breadth', score: 88.7, max: 100 },
+        { name: 'HumanEval', sub: 'Code pass@1', score: 90.2, max: 100 },
+        { name: 'MATH Reasoning', sub: 'Competition math', score: 76.6, max: 100 },
+        { name: 'GPQA Diamond', sub: 'Expert Q&A', score: 53.6, max: 100 },
+        { name: 'MGSM', sub: 'Multilingual math', score: 90.5, max: 100 },
+        { name: 'MT-Bench', sub: 'Multi-turn chat', score: 91.0, max: 100 },
+      ],
+      arch: {
+        context: '128K',
+        params: '~1.8T',
+        heads: 'MoE sparse',
+        layers: '~120 (est.)',
+      },
+      modalities: [
+        { name: 'Text', active: true },
+        { name: 'Vision', active: true },
+        { name: 'Audio', active: true },
+        { name: 'Video', active: false },
+        { name: 'Code', active: true },
+        { name: 'Function Calls', active: true },
+      ],
+      strengths: [
+        { icon: '🎙️', text: 'Real-time audio I/O with sub-300ms latency — first model to handle live voice conversation without a speech pipeline.' },
+        { icon: '👁️', text: 'End-to-end vision processing: charts, documents, screenshots, and photos all handled natively without a separate encoder.' },
+        { icon: '💻', text: 'State-of-the-art code generation with 90.2% on HumanEval, matching specialized code models.' },
+        { icon: '🌐', text: 'Improved multilingual performance — top performer on MGSM multilingual math benchmark (90.5%).' },
+        { icon: '⚡', text: 'Twice the inference throughput vs GPT-4 Turbo, enabling cost-effective production deployments.' },
+      ],
+      rl: [
+        { icon: '📚', name: 'Pretraining', desc: 'Multimodal web-scale data — text, images, audio' },
+        { icon: '🤝', name: 'SFT', desc: 'Supervised fine-tuning on curated omni-modal demos' },
+        { icon: '🏆', name: 'RLHF', desc: 'Human preference ranking across all output types' },
+        { icon: '🤖', name: 'RLAIF', desc: 'AI-generated constitutional feedback at scale' },
+      ],
+    },
+
+    o3: {
+      name: 'o3',
+      family: 'OpenAI',
+      release: 'Dec 2024',
+      icon: '🧠',
+      iconBg: 'linear-gradient(135deg, rgba(0,180,255,0.25), rgba(0,80,160,0.15))',
+      iconBorder: '1px solid rgba(0,210,255,0.4)',
+      accent: '#00D2FF',
+      theme: 'theme-openai',
+      tagline: 'Extended Chain-of-Thought Reasoning Model — Process Reward Optimization',
+      overview: 'OpenAI o3 is a reasoning-optimized model that implements a novel "thinking time" architecture: before responding, the model performs an extended internal chain-of-thought (CoT) scratchpad using a process-supervised reward model (PRM). This allows o3 to achieve unprecedented scores on mathematical olympiad problems, competitive programming, and frontier scientific reasoning. It reached 87.5% on ARC-AGI-1 — a benchmark designed to resist statistical memorization.',
+      params: '~1.8T (shared arch)',
+      context: '200K tokens',
+      training: 'Pretraining + PRM + CoT RL',
+      released: 'Dec 20, 2024',
+      throughput: 'Inference-heavy (thinking)',
+      api: 'API + ChatGPT Pro',
+      benchmarks: [
+        { name: 'MMLU', sub: 'Knowledge breadth', score: 91.2, max: 100 },
+        { name: 'HumanEval', sub: 'Code pass@1', score: 96.7, max: 100 },
+        { name: 'MATH Reasoning', sub: 'Competition math', score: 97.9, max: 100 },
+        { name: 'GPQA Diamond', sub: 'Expert Q&A', score: 87.7, max: 100 },
+        { name: 'ARC-AGI-1', sub: 'Novel pattern reasoning', score: 87.5, max: 100 },
+        { name: 'Codeforces ELO', sub: 'Competitive programming', score: 99.9, max: 100 },
+      ],
+      arch: {
+        context: '200K',
+        params: '~1.8T',
+        heads: 'PRM-guided CoT',
+        layers: '~120 (est.)',
+      },
+      modalities: [
+        { name: 'Text', active: true },
+        { name: 'Vision', active: true },
+        { name: 'Audio', active: false },
+        { name: 'Video', active: false },
+        { name: 'Code', active: true },
+        { name: 'Function Calls', active: true },
+      ],
+      strengths: [
+        { icon: '🧮', text: 'Scores 97.9% on MATH competition benchmark — surpassing gold-medal level human performance on mathematical olympiad problems.' },
+        { icon: '🏅', text: 'ARC-AGI-1 score of 87.5%, demonstrating genuine novel-pattern reasoning capability beyond pure memorization.' },
+        { icon: '💻', text: '96.7% on HumanEval and top-tier Codeforces ELO placing it above the 99.9th percentile of human competitive programmers.' },
+        { icon: '🔬', text: '87.7% on GPQA Diamond — matching PhD-level expert performance in physics, chemistry, and biology.' },
+        { icon: '⏱️', text: 'Configurable "thinking budget" allows users to trade off response latency vs. accuracy for their specific use case.' },
+      ],
+      rl: [
+        { icon: '📚', name: 'Pretraining', desc: 'Dense language + code + math corpus' },
+        { icon: '💭', name: 'CoT SFT', desc: 'Chain-of-thought traces from human experts' },
+        { icon: '🏆', name: 'PRM', desc: 'Process reward model scores intermediate steps' },
+        { icon: '🔄', name: 'RL Refine', desc: 'Policy gradient over verified reasoning paths' },
+      ],
+    },
+
+    claude35: {
+      name: 'Claude 3.5 Sonnet',
+      family: 'Anthropic',
+      release: 'Jun 2024',
+      icon: '✦',
+      iconBg: 'linear-gradient(135deg, rgba(255,140,66,0.25), rgba(200,80,20,0.15))',
+      iconBorder: '1px solid rgba(255,140,66,0.4)',
+      accent: '#FF8C42',
+      theme: 'theme-anthropic',
+      tagline: 'Constitutional AI Safety Pioneer — Agentic Task Specialist',
+      overview: 'Claude 3.5 Sonnet represents Anthropic\'s breakthrough in balancing safety alignment with frontier capability. Trained using Constitutional AI (CAI) — a technique where the model critiques and revises its own outputs against a set of ethical principles — it achieves superior performance on software engineering benchmarks. It was the first model to autonomously solve 49% of SWE-bench Verified tasks, a landmark for agentic coding. Its 200K context window with provably lower hallucination rates makes it the choice for long-document analysis.',
+      params: '~200B (est.)',
+      context: '200K tokens',
+      training: 'Constitutional AI + RLHF + DPO',
+      released: 'Jun 20, 2024',
+      throughput: 'High speed (mid-tier)',
+      api: 'Claude.ai + API',
+      benchmarks: [
+        { name: 'MMLU', sub: 'Knowledge breadth', score: 88.3, max: 100 },
+        { name: 'HumanEval', sub: 'Code pass@1', score: 92.0, max: 100 },
+        { name: 'MATH Reasoning', sub: 'Competition math', score: 71.1, max: 100 },
+        { name: 'GPQA Diamond', sub: 'Expert Q&A', score: 59.4, max: 100 },
+        { name: 'SWE-bench', sub: 'Real-world code fixes', score: 49.0, max: 100 },
+        { name: 'MT-Bench', sub: 'Multi-turn chat', score: 92.3, max: 100 },
+      ],
+      arch: {
+        context: '200K',
+        params: '~200B',
+        heads: 'Dense transformer',
+        layers: '96 (est.)',
+      },
+      modalities: [
+        { name: 'Text', active: true },
+        { name: 'Vision', active: true },
+        { name: 'Audio', active: false },
+        { name: 'Video', active: false },
+        { name: 'Code', active: true },
+        { name: 'Function Calls', active: true },
+      ],
+      strengths: [
+        { icon: '⚖️', text: 'Constitutional AI training produces measurably safer outputs — lowest rates of harmful content generation among frontier models in red-team evals.' },
+        { icon: '🛠️', text: 'SWE-bench Verified score of 49% — autonomous resolution of real GitHub issues using Anthropic\'s Computer Use API.' },
+        { icon: '📄', text: '200K context window with superior long-document faithfulness — outperforms peers on "needle-in-a-haystack" retrieval from 200K-token inputs.' },
+        { icon: '🗣️', text: 'Best multi-turn conversational coherence with MT-Bench score of 92.3, maintaining context over very long dialogue threads.' },
+        { icon: '🔐', text: 'Lowest hallucination rate on factual question-answering among 2024 frontier models in independent evaluations.' },
+      ],
+      rl: [
+        { icon: '📚', name: 'Pretraining', desc: 'Diverse, high-quality web + book corpus' },
+        { icon: '📜', name: 'CAI', desc: 'Constitutional self-critique + revision' },
+        { icon: '🏆', name: 'RLHF', desc: 'Human preference on helpfulness & harmlessness' },
+        { icon: '🔧', name: 'DPO', desc: 'Direct preference optimization for alignment' },
+      ],
+    },
+
+    claude3: {
+      name: 'Claude 3 Opus',
+      family: 'Anthropic',
+      release: 'Mar 2024',
+      icon: '🔮',
+      iconBg: 'linear-gradient(135deg, rgba(255,140,66,0.2), rgba(180,60,10,0.12))',
+      iconBorder: '1px solid rgba(255,140,66,0.35)',
+      accent: '#FF8C42',
+      theme: 'theme-anthropic',
+      tagline: 'Maximum Intelligence Architecture — Depth-First Reasoning Giant',
+      overview: 'Claude 3 Opus was Anthropic\'s most capable model at launch, establishing a new benchmark ceiling across reasoning, analysis, and research tasks. Designed for "depth over speed," it excels at complex multi-step problems where other models hallucinate or lose track. Its Constitutional AI v2 training incorporates self-supervised safety principles at a deeper level than any previous Anthropic model. Opus remains the preferred choice for research-grade analysis and complex document understanding despite Sonnet\'s emergence as the speed-accuracy sweet spot.',
+      params: '~400B (est.)',
+      context: '200K tokens',
+      training: 'Constitutional AI v2 + RLHF',
+      released: 'Mar 4, 2024',
+      throughput: 'Low speed (complex tasks)',
+      api: 'Claude.ai + API',
+      benchmarks: [
+        { name: 'MMLU', sub: 'Knowledge breadth', score: 86.8, max: 100 },
+        { name: 'HumanEval', sub: 'Code pass@1', score: 84.9, max: 100 },
+        { name: 'MATH Reasoning', sub: 'Competition math', score: 60.1, max: 100 },
+        { name: 'GPQA Diamond', sub: 'Expert Q&A', score: 50.4, max: 100 },
+        { name: 'SWE-bench', sub: 'Real-world code fixes', score: 28.4, max: 100 },
+        { name: 'MT-Bench', sub: 'Multi-turn chat', score: 90.8, max: 100 },
+      ],
+      arch: {
+        context: '200K',
+        params: '~400B',
+        heads: 'Dense transformer',
+        layers: '128 (est.)',
+      },
+      modalities: [
+        { name: 'Text', active: true },
+        { name: 'Vision', active: true },
+        { name: 'Audio', active: false },
+        { name: 'Video', active: false },
+        { name: 'Code', active: true },
+        { name: 'Function Calls', active: true },
+      ],
+      strengths: [
+        { icon: '🧩', text: 'Strongest multi-step reasoning among Anthropic models at launch — outperformed GPT-4 Turbo on graduate-level reasoning tasks.' },
+        { icon: '📊', text: 'Exceptional performance on complex data analysis, research synthesis, and lengthy academic document processing.' },
+        { icon: '🔭', text: 'CAI v2 constitutional principles give it a strong internal moral compass — near-zero compliance with adversarial jailbreak prompts.' },
+        { icon: '💬', text: '200K context faithfulness — verified to correctly cite and reference information from 180K+ token documents.' },
+        { icon: '🌍', text: 'Strong multilingual fluency across 50+ languages including low-resource languages often neglected by competitors.' },
+      ],
+      rl: [
+        { icon: '📚', name: 'Pretraining', desc: 'Curated multilingual + scientific corpus' },
+        { icon: '📜', name: 'CAI v2', desc: 'Constitutional principles embedded deeper' },
+        { icon: '🏆', name: 'RLHF', desc: 'Preference learning across 6 capability axes' },
+        { icon: '🔧', name: 'DPO', desc: 'Direct preference for nuanced alignment' },
+      ],
+    },
+
+    gemini15pro: {
+      name: 'Gemini 1.5 Pro',
+      family: 'Google DeepMind',
+      release: 'Feb 2024',
+      icon: '♾',
+      iconBg: 'linear-gradient(135deg, rgba(157,78,221,0.25), rgba(100,30,160,0.15))',
+      iconBorder: '1px solid rgba(157,78,221,0.4)',
+      accent: '#9D4EDD',
+      theme: 'theme-google',
+      tagline: 'Mixture-of-Experts Ultra-Long Context — 1 Million Token Window',
+      overview: 'Gemini 1.5 Pro is Google DeepMind\'s breakthrough long-context model, achieving a 1M-token context window through an efficient Mixture-of-Experts (MoE) architecture that activates only a fraction of parameters per forward pass. This enables it to process full codebases, hours of transcribed audio, or entire books in a single prompt. The "in-context learning" capability is extraordinary: it can learn new languages from a grammar book in-context with zero fine-tuning. It is the first model to pass a "needle in a haystack" test at 1M tokens with near-perfect recall.',
+      params: '~1T MoE (est., sparse)',
+      context: '1M tokens (128K public)',
+      training: 'Multimodal pretraining + RLHF',
+      released: 'Feb 15, 2024',
+      throughput: 'Optimized via MoE sparsity',
+      api: 'Gemini API + Vertex AI',
+      benchmarks: [
+        { name: 'MMLU', sub: 'Knowledge breadth', score: 85.9, max: 100 },
+        { name: 'HumanEval', sub: 'Code pass@1', score: 84.1, max: 100 },
+        { name: 'MATH Reasoning', sub: 'Competition math', score: 67.7, max: 100 },
+        { name: 'GPQA Diamond', sub: 'Expert Q&A', score: 46.2, max: 100 },
+        { name: 'Long Doc Recall', sub: '1M token recall@1', score: 99.7, max: 100 },
+        { name: 'Video Understanding', sub: 'EgoSchema benchmark', score: 75.0, max: 100 },
+      ],
+      arch: {
+        context: '1M tokens',
+        params: '~1T MoE',
+        heads: 'Sparse MoE layers',
+        layers: '64 (est.) MoE blocks',
+      },
+      modalities: [
+        { name: 'Text', active: true },
+        { name: 'Vision', active: true },
+        { name: 'Audio', active: true },
+        { name: 'Video', active: true },
+        { name: 'Code', active: true },
+        { name: 'Function Calls', active: true },
+      ],
+      strengths: [
+        { icon: '∞', text: '1M token context window — the largest of any production model. Can hold the entire works of Shakespeare (~5.5M characters) in its context.' },
+        { icon: '🗺️', text: 'Demonstrated in-context language learning: given a Kalamang grammar book as context, it learned to translate Kalamang with zero fine-tuning.' },
+        { icon: '🎬', text: 'Native video understanding — processes 1 hour of video with frame-level granularity for question answering and event localization.' },
+        { icon: '🏗️', text: 'MoE architecture enables frontier-level capability at a fraction of the compute cost of equivalent dense models.' },
+        { icon: '🎵', text: 'Native audio processing — transcription, speaker diarization, and sentiment analysis in a single model.' },
+      ],
+      rl: [
+        { icon: '📚', name: 'Pretraining', desc: 'Multimodal web-scale data incl. video frames' },
+        { icon: '🤝', name: 'SFT', desc: 'Supervised demos across all modality types' },
+        { icon: '🏆', name: 'RLHF', desc: 'Human raters across 5+ capability dimensions' },
+        { icon: '🔄', name: 'RLAIF', desc: 'Self-improvement via AI-generated feedback' },
+      ],
+    },
+
+    gemini20: {
+      name: 'Gemini 2.0 Flash',
+      family: 'Google DeepMind',
+      release: 'Jan 2025',
+      icon: '⚡',
+      iconBg: 'linear-gradient(135deg, rgba(157,78,221,0.25), rgba(90,20,140,0.15))',
+      iconBorder: '1px solid rgba(157,78,221,0.4)',
+      accent: '#9D4EDD',
+      theme: 'theme-google',
+      tagline: 'Next-Gen Streaming Intelligence — Native Tool Use & Real-time Multimodal',
+      overview: 'Gemini 2.0 Flash is Google\'s next-generation production model optimized for the "agentic era" — where models orchestrate multi-step tasks with external tools. It introduces native image generation, real-time audio output, bidirectional streaming, and a significantly upgraded function-calling architecture. It outperforms Gemini 1.5 Pro on most benchmarks while operating at a fraction of the latency, making it the ideal backbone for AI agents, apps, and real-time services.',
+      params: '~200B (est. dense)',
+      context: '1M tokens',
+      training: 'Multimodal pretraining + RLHF + tool-use fine-tuning',
+      released: 'Jan 30, 2025',
+      throughput: 'Fastest Gemini (Flash-tier)',
+      api: 'Gemini API + Vertex AI',
+      benchmarks: [
+        { name: 'MMLU', sub: 'Knowledge breadth', score: 87.0, max: 100 },
+        { name: 'HumanEval', sub: 'Code pass@1', score: 89.5, max: 100 },
+        { name: 'MATH Reasoning', sub: 'Competition math', score: 74.3, max: 100 },
+        { name: 'GPQA Diamond', sub: 'Expert Q&A', score: 62.1, max: 100 },
+        { name: 'Agentic Tasks', sub: 'Tool-use multi-step', score: 84.0, max: 100 },
+        { name: 'Long Doc Recall', sub: '1M token recall@1', score: 98.4, max: 100 },
+      ],
+      arch: {
+        context: '1M tokens',
+        params: '~200B',
+        heads: 'Dense + native tools',
+        layers: '80 (est.)',
+      },
+      modalities: [
+        { name: 'Text', active: true },
+        { name: 'Vision', active: true },
+        { name: 'Audio', active: true },
+        { name: 'Video', active: true },
+        { name: 'Code', active: true },
+        { name: 'Function Calls', active: true },
+      ],
+      strengths: [
+        { icon: '🛠️', text: 'Native tool use architecture — function calling is deeply integrated at the model level, not added post-hoc, enabling more reliable agentic pipelines.' },
+        { icon: '🎙️', text: 'Bidirectional real-time audio streaming for live voice assistant applications at consumer-grade latency.' },
+        { icon: '🖼️', text: 'Native image generation capability — one of the first text-to-everything frontier models from a major lab.' },
+        { icon: '⚡', text: 'Sub-500ms time-to-first-token on standard GPU configs, enabling real-time user-facing applications at scale.' },
+        { icon: '🤖', text: 'Purpose-built for multi-agent orchestration — supports complex tool chains, code execution, and search grounding natively.' },
+      ],
+      rl: [
+        { icon: '📚', name: 'Pretraining', desc: 'Multimodal + tool use trajectory data' },
+        { icon: '🛠️', name: 'Tool SFT', desc: 'Fine-tuned on verified tool-use demonstrations' },
+        { icon: '🏆', name: 'RLHF', desc: 'Human preference across agentic task quality' },
+        { icon: '🔄', name: 'RLAIF', desc: 'AI critic feedback on tool-use correctness' },
+      ],
+    },
+
+    llama3: {
+      name: 'Llama 3.1 405B',
+      family: 'Meta AI',
+      release: 'Jul 2024',
+      icon: '🦙',
+      iconBg: 'linear-gradient(135deg, rgba(16,240,140,0.2), rgba(0,160,90,0.1))',
+      iconBorder: '1px solid rgba(16,240,140,0.4)',
+      accent: '#10F08C',
+      theme: 'theme-meta',
+      tagline: 'Open-Weight Frontier Giant — 405B Parameters, Fully Accessible',
+      overview: 'Llama 3.1 405B is Meta\'s landmark achievement in open-weight frontier AI. At 405 billion parameters, it is the largest openly available model — trained on 15 trillion tokens across 8 languages using a custom 24K GPU cluster. Unlike closed models, the weights are publicly downloadable, enabling academic research, commercial fine-tuning, and on-premise deployment. It achieves near-parity with GPT-4o on key benchmarks and definitively outperforms GPT-3.5, Claude 3 Sonnet, and Gemini 1.0 Pro, reshaping the open-vs-closed frontier debate.',
+      params: '405B (dense, public)',
+      context: '128K tokens',
+      training: 'Supervised pretraining + RLHF + DPO + PPO',
+      released: 'Jul 23, 2024',
+      throughput: 'Self-hosted (hardware dependent)',
+      api: 'Meta AI + self-hosted',
+      benchmarks: [
+        { name: 'MMLU', sub: 'Knowledge breadth', score: 87.3, max: 100 },
+        { name: 'HumanEval', sub: 'Code pass@1', score: 89.0, max: 100 },
+        { name: 'MATH Reasoning', sub: 'Competition math', score: 73.8, max: 100 },
+        { name: 'GPQA Diamond', sub: 'Expert Q&A', score: 51.1, max: 100 },
+        { name: 'IFEval', sub: 'Instruction following', score: 88.6, max: 100 },
+        { name: 'MT-Bench', sub: 'Multi-turn chat', score: 90.2, max: 100 },
+      ],
+      arch: {
+        context: '128K',
+        params: '405B',
+        heads: 'GQA (Grouped-Query Attn)',
+        layers: '126 transformer blocks',
+      },
+      modalities: [
+        { name: 'Text', active: true },
+        { name: 'Vision', active: false },
+        { name: 'Audio', active: false },
+        { name: 'Video', active: false },
+        { name: 'Code', active: true },
+        { name: 'Function Calls', active: true },
+      ],
+      strengths: [
+        { icon: '🌍', text: 'Fully open weights — 405B parameters downloadable under Meta\'s community license, enabling academic research, custom fine-tuning, and audits.' },
+        { icon: '💬', text: 'Trained on 15 trillion tokens across 8 languages — strongest multilingual capability among open-weight models at release.' },
+        { icon: '🔁', text: 'Grouped-Query Attention (GQA) enables 4× memory efficiency vs MHA, making 405B inference feasible on high-memory consumer hardware.' },
+        { icon: '⚙️', text: 'PPO + DPO combined training pipeline — carefully ablated to balance instruction following quality with factual accuracy.' },
+        { icon: '🏗️', text: 'Trained on 24,576 NVIDIA H100 GPUs — at the time, the largest GPU cluster ever used for a public open-weight model.' },
+      ],
+      rl: [
+        { icon: '📚', name: 'Pretraining', desc: '15T tokens, 8 languages, custom GPU cluster' },
+        { icon: '🤝', name: 'SFT', desc: 'Supervised fine-tuning on curated demos' },
+        { icon: '🏆', name: 'PPO + RLHF', desc: 'Proximal Policy Optimization on human labels' },
+        { icon: '🔧', name: 'DPO', desc: 'Direct preference optimization for alignment' },
+      ],
+    },
+
+    llama4: {
+      name: 'Llama 4 Scout',
+      family: 'Meta AI',
+      release: 'Apr 2025',
+      icon: '🔭',
+      iconBg: 'linear-gradient(135deg, rgba(16,240,140,0.2), rgba(0,140,80,0.1))',
+      iconBorder: '1px solid rgba(16,240,140,0.4)',
+      accent: '#10F08C',
+      theme: 'theme-meta',
+      tagline: 'MoE Multimodal Open Frontier — 10 Million Token Native Context',
+      overview: 'Llama 4 Scout represents Meta\'s leap into the MoE (Mixture-of-Experts) paradigm for open-weight models. With 17 billion active parameters from a 109B total MoE pool and a native 10 million token context window, it surpasses Gemini 1.5 Pro\'s context on open infrastructure. Scout is Meta\'s first natively multimodal open model — processing text and images together without adapters. The MoE routing mechanism means it runs efficiently on a single NVIDIA H100 80GB GPU, democratizing long-context and multimodal inference for researchers and developers worldwide.',
+      params: '17B active / 109B total (MoE)',
+      context: '10M tokens (native)',
+      training: 'Multimodal pretraining + RLHF + DPO',
+      released: 'Apr 5, 2025',
+      throughput: 'Single H100 80GB inference',
+      api: 'Meta AI + self-hosted',
+      benchmarks: [
+        { name: 'MMLU', sub: 'Knowledge breadth', score: 79.2, max: 100 },
+        { name: 'HumanEval', sub: 'Code pass@1', score: 83.0, max: 100 },
+        { name: 'MATH Reasoning', sub: 'Competition math', score: 73.4, max: 100 },
+        { name: 'GPQA Diamond', sub: 'Expert Q&A', score: 43.5, max: 100 },
+        { name: 'Long Doc Recall', sub: '1M token recall@1', score: 96.8, max: 100 },
+        { name: 'Image Understanding', sub: 'MMMU benchmark', score: 72.7, max: 100 },
+      ],
+      arch: {
+        context: '10M tokens',
+        params: '17B active',
+        heads: 'MoE sparse routing',
+        layers: '48 MoE blocks',
+      },
+      modalities: [
+        { name: 'Text', active: true },
+        { name: 'Vision', active: true },
+        { name: 'Audio', active: false },
+        { name: 'Video', active: false },
+        { name: 'Code', active: true },
+        { name: 'Function Calls', active: true },
+      ],
+      strengths: [
+        { icon: '🔭', text: 'Native 10M token context window — the longest of any open-weight model. Can process entire codebases, legal corpora, or book series in one call.' },
+        { icon: '🖼️', text: 'First natively multimodal open-weight Meta model — image + text processing without external adapter modules.' },
+        { icon: '⚡', text: 'MoE architecture: only 17B parameters activated per forward pass from a 109B pool — frontier quality at single-GPU inference cost.' },
+        { icon: '🌐', text: 'Trained on a comprehensive multilingual corpus including 12 languages, improving cross-lingual transfer for low-resource languages.' },
+        { icon: '📖', text: 'iRoPE positional encoding enables genuine generalization to context lengths far beyond training distribution, unlike relative position-based models.' },
+      ],
+      rl: [
+        { icon: '📚', name: 'Pretraining', desc: 'Multimodal web corpus with image-text pairs' },
+        { icon: '🔀', name: 'MoE SFT', desc: 'Expert routing fine-tuning with modality-aware batches' },
+        { icon: '🏆', name: 'RLHF', desc: 'Human preference ranking on helpfulness, safety' },
+        { icon: '🔧', name: 'DPO', desc: 'Direct preference optimization for output quality' },
+      ],
+    },
+
+  };
+
+  /* ──────────────────────────────────────────────────────────────
+     STATE
+  ────────────────────────────────────────────────────────────── */
+  let activeModel = null;
+  let activeNode  = null;
+
+  /* ──────────────────────────────────────────────────────────────
+     HEADER COUNTERS — animated count-up
+  ────────────────────────────────────────────────────────────── */
+  function animateCountUp(el, from, to, duration, suffix) {
+    const start = performance.now();
+    const range = to - from;
+    function step(now) {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = Math.round(from + range * eased);
+      el.textContent = current + (suffix || '');
+      if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    animateCountUp(document.getElementById('counter-models'), 0, 8, 1200, '');
+    setTimeout(() => {
+      document.getElementById('counter-params').textContent = '~1.8T';
+    }, 800);
+    setTimeout(() => {
+      document.getElementById('counter-ctx').textContent = '10M';
+    }, 1200);
+
+    // Animate mini bars on load
+    setTimeout(animateMiniBarsFill, 400);
+  });
+
+  /* ──────────────────────────────────────────────────────────────
+     MINI BARS (left pane)
+  ────────────────────────────────────────────────────────────── */
+  function animateMiniBarsFill() {
+    document.querySelectorAll('.mini-bar-fill').forEach(bar => {
+      const target = parseFloat(bar.dataset.target);
+      bar.style.width = target + '%';
+    });
+  }
+
+  /* ──────────────────────────────────────────────────────────────
+     MODEL SELECTION
+  ────────────────────────────────────────────────────────────── */
+  function selectModel(id, nodeEl) {
+    // Deactivate previous
+    if (activeNode) activeNode.classList.remove('active');
+
+    // Activate new
+    activeModel = id;
+    activeNode  = nodeEl;
+    nodeEl.classList.add('active');
+
+    // Render detail panel
+    renderDetail(MODELS[id]);
+  }
+
+  /* ──────────────────────────────────────────────────────────────
+     BUILD DETAIL HTML
+  ────────────────────────────────────────────────────────────── */
+  function renderDetail(m) {
+    const placeholder = document.getElementById('placeholder');
+    const panel       = document.getElementById('detail-panel');
+
+    placeholder.style.display = 'none';
+    panel.classList.remove('visible');
+
+    // Rebuild
+    panel.innerHTML = buildDetailHTML(m);
+    panel.classList.add('visible');
+
+    // Animate benchmark bars after a tick
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        panel.querySelectorAll('.bench-fill').forEach(bar => {
+          const pct = parseFloat(bar.dataset.pct);
+          bar.style.width = pct + '%';
+        });
+      });
+    });
+  }
+
+  /* ──────────────────────────────────────────────────────────────
+     SVG RADAR CHART
+  ────────────────────────────────────────────────────────────── */
+  function buildRadarSVG(m) {
+    const cx = 120, cy = 120, r = 80;
+    const axes = ['Reasoning', 'Coding', 'Math', 'Safety', 'Context', 'Multimod.'];
+    const scoresByModel = {
+      gpt4o:      [0.87, 0.90, 0.77, 0.80, 0.70, 0.92],
+      o3:         [0.98, 0.97, 0.98, 0.82, 0.80, 0.72],
+      claude35:   [0.86, 0.92, 0.71, 0.95, 0.82, 0.78],
+      claude3:    [0.88, 0.85, 0.60, 0.93, 0.82, 0.75],
+      gemini15pro:[0.84, 0.84, 0.68, 0.82, 0.99, 0.94],
+      gemini20:   [0.87, 0.90, 0.74, 0.83, 0.99, 0.94],
+      llama3:     [0.86, 0.89, 0.74, 0.75, 0.68, 0.30],
+      llama4:     [0.80, 0.83, 0.73, 0.76, 0.99, 0.72],
+    };
+    const modelId = Object.keys(MODELS).find(k => MODELS[k] === m);
+    const scores = scoresByModel[modelId] || [0.8,0.8,0.8,0.8,0.8,0.8];
+    const n = axes.length;
+    const angleStep = (2 * Math.PI) / n;
+    const startAngle = -Math.PI / 2;
+
+    function polarToXY(angle, radius) {
+      return [cx + radius * Math.cos(angle), cy + radius * Math.sin(angle)];
+    }
+
+    // Grid rings
+    let gridLines = '';
+    [0.25, 0.5, 0.75, 1.0].forEach(ring => {
+      const pts = axes.map((_, i) => {
+        const [x, y] = polarToXY(startAngle + i * angleStep, r * ring);
+        return `${x},${y}`;
+      }).join(' ');
+      gridLines += `<polygon points="${pts}" fill="none" stroke="#1E2D45" stroke-width="1" />`;
+    });
+
+    // Axis lines + labels
+    let axisLines = '', axisLabels = '';
+    axes.forEach((axis, i) => {
+      const angle = startAngle + i * angleStep;
+      const [x2, y2] = polarToXY(angle, r);
+      const [lx, ly] = polarToXY(angle, r + 18);
+      axisLines += `<line x1="${cx}" y1="${cy}" x2="${x2}" y2="${y2}" stroke="#1E2D45" stroke-width="1" />`;
+      axisLabels += `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" class="radar-label">${axis}</text>`;
+    });
+
+    // Data polygon
+    const dataPoints = scores.map((s, i) => {
+      const angle = startAngle + i * angleStep;
+      return polarToXY(angle, r * s);
+    });
+    const dataPath = dataPoints.map((p, i) => `${i === 0 ? 'M' : 'L'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ') + ' Z';
+
+    // Dots
+    const dots = dataPoints.map(p =>
+      `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.5" fill="${m.accent}" opacity="0.9"/>`
+    ).join('');
+
+    return `
+      <svg width="240" height="240" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" style="overflow:visible">
+        <style>.radar-label { font-size: 9px; fill: #4B5A72; font-family: 'Segoe UI', sans-serif; }</style>
+        ${gridLines}
+        ${axisLines}
+        <path d="${dataPath}" fill="${m.accent}" fill-opacity="0.15" stroke="${m.accent}" stroke-width="1.5" stroke-linejoin="round"/>
+        ${dots}
+        ${axisLabels}
+      </svg>
+    `;
+  }
+
+  /* ──────────────────────────────────────────────────────────────
+     BUILD FULL DETAIL HTML
+  ────────────────────────────────────────────────────────────── */
+  function buildDetailHTML(m) {
+    /* benchmark bars */
+    const benchBars = m.benchmarks.map(b => {
+      const pct = (b.score / b.max) * 100;
+      return `
+        <div class="bench-row">
+          <div class="bench-name">${b.name}<span>${b.sub}</span></div>
+          <div class="bench-track">
+            <div class="bench-fill" data-pct="${pct.toFixed(1)}"
+              style="background: linear-gradient(90deg, ${m.accent}CC, ${m.accent}44); width: 0"></div>
+          </div>
+          <div class="bench-score" style="color:${m.accent}">${b.score}%</div>
+        </div>
+      `;
+    }).join('');
+
+    /* arch cards */
+    const archCards = `
+      <div class="arch-card">
+        <div class="arch-card-icon">📏</div>
+        <div class="arch-card-label">Context Window</div>
+        <div class="arch-card-value" style="color:${m.accent}">${m.arch.context}</div>
+        <div class="arch-card-sub">tokens</div>
+      </div>
+      <div class="arch-card">
+        <div class="arch-card-icon">🧬</div>
+        <div class="arch-card-label">Parameters</div>
+        <div class="arch-card-value" style="color:${m.accent}">${m.arch.params}</div>
+        <div class="arch-card-sub">scale</div>
+      </div>
+      <div class="arch-card">
+        <div class="arch-card-icon">🔗</div>
+        <div class="arch-card-label">Attention Type</div>
+        <div class="arch-card-value" style="font-size:12px; color:${m.accent}">${m.arch.heads}</div>
+        <div class="arch-card-sub">mechanism</div>
+      </div>
+      <div class="arch-card">
+        <div class="arch-card-icon">📐</div>
+        <div class="arch-card-label">Depth</div>
+        <div class="arch-card-value" style="font-size:12px; color:${m.accent}">${m.arch.layers}</div>
+        <div class="arch-card-sub">architecture</div>
+      </div>
+    `;
+
+    /* modality flags */
+    const modalityFlags = m.modalities.map(mod => `
+      <div class="modality-flag ${mod.active ? 'active' : 'inactive'}">
+        <span class="mflag-dot" style="${mod.active ? `background:${m.accent}` : ''}"></span>
+        ${mod.name}
+      </div>
+    `).join('');
+
+    /* strengths */
+    const strengthsHTML = m.strengths.map(s => `
+      <div class="strength-item">
+        <span class="sicon">${s.icon}</span>
+        <span>${s.text}</span>
+      </div>
+    `).join('');
+
+    /* RL loop */
+    const rlSteps = m.rl.map((step, i) => `
+      <div class="rl-step" style="${i < m.rl.length - 1 ? `border-right: 1px solid #1E2D45` : ''}">
+        <div class="rl-icon">${step.icon}</div>
+        <div class="rl-name">${step.name}</div>
+        <div class="rl-desc">${step.desc}</div>
+        ${i < m.rl.length - 1 ? `<span class="rl-arrow" style="color:${m.accent}">›</span>` : ''}
+      </div>
+    `).join('');
+
+    /* key numbers */
+    const keyNums = `
+      <div class="knum">
+        <span class="knum-val" style="color:${m.accent}">${m.arch.context}</span>
+        <span class="knum-lbl">Context Tokens</span>
+      </div>
+      <div class="knum">
+        <span class="knum-val" style="color:${m.accent}">${m.arch.params}</span>
+        <span class="knum-lbl">Parameters</span>
+      </div>
+      <div class="knum">
+        <span class="knum-val" style="color:${m.accent}">${m.benchmarks[0].score}%</span>
+        <span class="knum-lbl">MMLU Score</span>
+      </div>
+    `;
+
+    /* radar chart */
+    const radar = buildRadarSVG(m);
+
+    return `
+      <div class="detail-header ${m.theme}">
+        <div class="detail-icon" style="background:${m.iconBg}; border:${m.iconBorder}">${m.icon}</div>
+        <div class="detail-title-block">
+          <h2>${m.name}</h2>
+          <div class="subtitle">${m.tagline}</div>
+          <div class="detail-chips">
+            <span class="chip" style="background:${m.accent}22;color:${m.accent};border:1px solid ${m.accent}44">${m.family}</span>
+            <span class="chip chip-blue">${m.release}</span>
+            <span class="chip" style="background:rgba(255,255,255,0.04);color:#64748B;border:1px solid #1E2D45">
+              ${m.training.split('+')[0].trim()}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <p class="overview-text" style="border-left-color:${m.accent}">${m.overview}</p>
+
+      <div class="section-label" style="--accent:${m.accent}">Key Numbers</div>
+      <div class="key-numbers">${keyNums}</div>
+
+      <div class="section-label" style="--accent:${m.accent}">Benchmark Performance</div>
+      <div class="benchmark-grid">${benchBars}</div>
+
+      <div style="display:grid; grid-template-columns: 1fr 240px; gap:24px; margin-top:28px; align-items: start;">
+        <div>
+          <div class="section-label" style="--accent:${m.accent}; margin-top:0">Architecture Anatomy</div>
+          <div class="arch-grid">${archCards}</div>
+          <div class="section-label" style="--accent:${m.accent}">Input Modalities</div>
+          <div class="modality-row">${modalityFlags}</div>
+        </div>
+        <div>
+          <div class="section-label" style="--accent:${m.accent}; margin-top:0">Capability Radar</div>
+          <div class="radar-container">${radar}</div>
+        </div>
+      </div>
+
+      <div class="section-label" style="--accent:${m.accent}">Training Pipeline</div>
+      <div class="rl-diagram">${rlSteps}</div>
+
+      <div class="section-label" style="--accent:${m.accent}">Primary Strengths</div>
+      <div class="strengths-list">${strengthsHTML}</div>
+
+      <div style="margin-top:24px; padding:14px 16px; background:rgba(255,255,255,0.015); border:1px solid #1E2D45; border-radius:8px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+        <div style="font-size:12px; color:#4B5A72;">
+          <strong style="color:#64748B">Training:</strong> ${m.training} &nbsp;·&nbsp;
+          <strong style="color:#64748B">Released:</strong> ${m.released}
+        </div>
+        <div style="font-size:12px; color:#4B5A72;">
+          <strong style="color:#64748B">Throughput:</strong> ${m.throughput} &nbsp;·&nbsp;
+          <strong style="color:#64748B">Access:</strong> ${m.api}
+        </div>
+      </div>
+    `;
+  }
+
+  /* ──────────────────────────────────────────────────────────────
+     KEYBOARD NAVIGATION
+  ────────────────────────────────────────────────────────────── */
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && document.activeElement.classList.contains('model-node')) {
+      const nodeId = document.activeElement.id.replace('node-', '');
+      selectModel(nodeId, document.activeElement);
+    }
+  });
+
+  /* ──────────────────────────────────────────────────────────────
+     AUTO-SELECT FIRST MODEL ON LOAD
+  ────────────────────────────────────────────────────────────── */
+  window.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+      const firstNode = document.getElementById('node-gpt4o');
+      selectModel('gpt4o', firstNode);
+    }, 700);
+  });
+</script>
+</body>
+</html>
